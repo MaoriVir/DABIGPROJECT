@@ -849,7 +849,7 @@ MonoBehaviour:
   moveSpeed: 5
   jumpForce: 25
   jumpCutMultiplier: 0.5
-  groundPoundSpeed: 10
+  groundPoundSpeed: 20
   groundCheckPoint: {fileID: 668084371}
   groundCheckRadius: 0.2
   groundLayer:
