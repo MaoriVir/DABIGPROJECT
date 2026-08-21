@@ -26,20 +26,33 @@ public class PlayerMove : MonoBehaviour
     private bool isGrounded;
     private bool jumpPressedThisFrame;
     private bool isHoldingJump;
-
+    private Animator anim;
+    private bool isWalking;
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+      
     }
 
     // Tracks WASD / D-pad
     public void OnMove(InputValue value)
     {
         movementInput = value.Get<Vector2>();
+        isWalking = true;
+        if (movementInput.x == 0)
+        {
+            isWalking = false;
+        }
     }
 
     private void Update()
     {
+        
+        
+        anim.SetBool("isGrounded", isGrounded);
+        anim.SetBool("isWalking", isWalking);
+        
         // 1. Regular Ground Check
         isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, groundLayer);
 
@@ -70,6 +83,8 @@ public class PlayerMove : MonoBehaviour
         isGroundPounding = true;
         // Zero out horizontal velocity entirely and smash down hard
         rb.linearVelocity = new Vector2(0f, -groundPoundSpeed);
+        anim.SetTrigger("pressingS");
+        
     }
 
     private void FixedUpdate()

@@ -279,8 +279,8 @@ Transform:
   m_GameObject: {fileID: 91610654}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.9235, y: 4.9401, z: 0}
-  m_LocalScale: {x: 13.475588, y: 0.836969, z: 0.71716}
+  m_LocalPosition: {x: -5, y: 5, z: 0}
+  m_LocalScale: {x: 2.2771266, y: 0.71716, z: 0.71716}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -558,7 +558,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.033, y: -0.62, z: 0}
-  m_LocalScale: {x: 3.84, y: 1, z: 1}
+  m_LocalScale: {x: 8, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1505880829}
@@ -634,9 +634,9 @@ GameObject:
   - component: {fileID: 1505880828}
   - component: {fileID: 1505880827}
   - component: {fileID: 1505880826}
+  - component: {fileID: 1505880825}
   - component: {fileID: 1505880830}
   - component: {fileID: 1505880831}
-  - component: {fileID: 1505880832}
   m_Layer: 0
   m_Name: PLAYER
   m_TagString: Untagged
@@ -644,6 +644,27 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1505880825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1505880824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0517568d4ece40a4089b08167d0dc492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  moveSpeed: 5
+  jumpForce: 15
+  jumpCutMultiplier: 0.5
+  groundPoundSpeed: 25
+  groundCheckPoint: {fileID: 668084371}
+  groundCheckRadius: 0.2
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!50 &1505880826
 Rigidbody2D:
   serializedVersion: 5
@@ -834,27 +855,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &1505880832
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505880824}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bbf2038e9921aa84aa9598060110c3c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMove1
-  moveSpeed: 5
-  jumpForce: 25
-  jumpCutMultiplier: 0.5
-  groundPoundSpeed: 10
-  groundCheckPoint: {fileID: 668084371}
-  groundCheckRadius: 0.2
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 64
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
