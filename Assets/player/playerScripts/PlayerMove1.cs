@@ -33,6 +33,7 @@ public class PlayerMove1 : MonoBehaviour
     private bool isHoldingJump;
     private bool desiredGroundPound;
 
+    private bool isFacingRight = true;
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -118,9 +119,25 @@ public class PlayerMove1 : MonoBehaviour
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
             }
+            
+            if (movementInput.x > 0.01f && !isFacingRight)
+            {
+                Flip();
+            }
+            else if (movementInput.x < -0.01f && isFacingRight)
+            {
+                Flip();
+            }
+            
         }
     }
-
+    private void Flip()
+    {
+        isFacingRight = !isFacingRight;
+        Vector3 localScale = transform.localScale;
+        localScale.x *= -1f;
+        transform.localScale = localScale;
+    }
     private void OnDrawGizmosSelected()
     {
         if (groundCheckPoint != null)
