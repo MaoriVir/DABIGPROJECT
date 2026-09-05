@@ -1,9 +1,13 @@
 using UnityEngine;
+
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
-
 public class Enemy1Script : MonoBehaviour
 {
+    [Header("Projectile Settings")]
+    public GameObject projectilePrefab; // Drag your bullet prefab here
+    public Transform firePoint;          // Create an empty child object at gun/hand position
+
     // note to self: so that it wont move while slammed
     private bool isStunned = false;
     
@@ -20,7 +24,7 @@ public class Enemy1Script : MonoBehaviour
 
     [Header("Movement Settings")]
     public float moveSpeed = 3f;
-    public float stoppingDistance = 1f;
+    public float stoppingDistance = 5f;
 
     [Header("Attack Settings")]
     public float attackRate = 2f; // Time in seconds between attacks
@@ -37,7 +41,20 @@ public class Enemy1Script : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         currentHealth = maxHealth;
 
-       
+        // --- AUTOMATIC PLAYER FINDER ---
+        // If the player slot was left empty, find the object in the scene with the "Player" tag
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                player = playerObj.transform;
+            }
+            else
+            {
+                Debug.LogError("Enemy1Script: Could not find a GameObject with the tag 'Player' in the scene!");
+            }
+        }
     }
 
     void Update()
@@ -47,33 +64,33 @@ public class Enemy1Script : MonoBehaviour
         // Calculate distance to the player
         float distanceX = Mathf.Abs(transform.position.x - player.position.x);
 
-
         // Handle flipping the sprite based on player direction
         FlipSprite();
 
         if (distanceX <= stoppingDistance)
         {
-            // Near player horizontally: Stop moving and try to attack
+            // The enemy has reached their shooting perimeter!
             animator.SetBool("isMoving", false);
 
             if (Time.time >= nextAttackTime)
             {
-                AttackPlayer();
+                AttackPlayer(); // Triggers your animation, which fires via the Animation Event
                 nextAttackTime = Time.time + attackRate;
             }
         }
         else
         {
-            // Far from player horizontally: Move towards player
+            // The player is too far away, move closer until we hit the stoppingDistance perimeter
             MoveTowardsPlayer();
         }
+      
     }
 
     void MoveTowardsPlayer()
     {
         animator.SetBool("isMoving", true);
     
-        // 3. Create a target position using the player's X but the ENEMY'S OWN Y position
+        // Target position using the player's X but the ENEMY'S OWN Y position
         Vector2 targetPosition = new Vector2(player.position.x, transform.position.y);
 
         // Move horizontally toward that target position
@@ -82,23 +99,52 @@ public class Enemy1Script : MonoBehaviour
 
     void FlipSprite()
     {
-        if (player.position.x > transform.position.x)
-            {
-                spriteRenderer.flipX = true; 
-            }
-            // If player is to the left, unflip the sprite so it faces left (false)
-            else if (player.position.x < transform.position.x)
-            {
-                spriteRenderer.flipX = false;
-            }
-    }
+        // Record the current flip state before changing it
+        bool wasFlippedRight = spriteRenderer.flipX;
 
+        if (player.position.x > transform.position.x)
+        {
+            spriteRenderer.flipX = true; 
+        }
+        else if (player.position.x < transform.position.x)
+        {
+            spriteRenderer.flipX = false;
+        }
+
+        // --- AUTOMATIC FIREPOINT FLIPPING ---
+        // If the flip state changed this frame, mirror the fire point's X position
+        if (wasFlippedRight != spriteRenderer.flipX && firePoint != null)
+        {
+            Vector3 localPos = firePoint.localPosition;
+            localPos.x = -localPos.x; // Invert the X coordinate relative to the enemy center
+            firePoint.localPosition = localPos;
+        }
+    }
+    
     void AttackPlayer()
     {
-        // Triggers the Attack animation we set up in the Animator
+        // 1. Only trigger the animation here
         animator.SetTrigger("atk");
+    }
+
+// 2. Add this NEW public method. The animation will call this directly!
+    public void SpawnProjectileEvent()
+    {
+        if (isDead || isStunned) return; // Don't shoot if interrupted
+
+        if (projectilePrefab != null && firePoint != null)
+        {
+            GameObject newProjectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
         
-        // TODO: Add actual player damage logic here (e.g., player.GetComponent<PlayerHealth>().TakeDamage(1);)
+            // Match this name exactly to your projectile script (EnemyProjectile or EnemyProjectile2D)
+            EnemyProjectile bulletScript = newProjectile.GetComponent<EnemyProjectile>();
+        
+            if (bulletScript != null)
+            {
+                float shootDirection = spriteRenderer.flipX ? 1f : -1f;
+                bulletScript.SetupDirection(shootDirection);
+            }
+        }
     }
 
     // Public method called when the player hits this enemy
@@ -120,12 +166,11 @@ public class Enemy1Script : MonoBehaviour
         
         // Triggers the Defeat animation from Any State
         animator.SetTrigger("defeat");
-
-       
         
-        // Optional: Destroy the enemy GameObject after the animation finishes (e.g., 2 seconds)
+        // Destroy the enemy GameObject after the animation finishes
         Destroy(gameObject, 2f);
     }
+
     void FixedUpdate()
     {
         if (groundCheckPoint != null)
@@ -161,5 +206,4 @@ public class Enemy1Script : MonoBehaviour
     {
         isStunned = false;
     }
-    
 }

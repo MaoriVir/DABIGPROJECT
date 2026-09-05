@@ -6,6 +6,12 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Collider2D))] // Added to guarantee access to the player's main collider
 public class PlayerMove1 : MonoBehaviour
 {
+    
+    [Header("Health Settings")]
+    [SerializeField] private int maxHealth = 3;
+    private int currentHealth;
+    private bool isDead = false;
+    
     [Header("Movement")] [SerializeField] private float moveSpeed = 6f;
 
     [Header("Jumping & Variable Height")] [SerializeField]
@@ -42,6 +48,7 @@ public class PlayerMove1 : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         playerCollider = GetComponent<Collider2D>();
+        currentHealth = maxHealth;
     }
 
     public void OnMove(InputValue value)
@@ -205,5 +212,33 @@ public class PlayerMove1 : MonoBehaviour
         {
             enemyRb.mass = 10000f; 
         }
+    }
+    
+    public void TakeDamage(int damageAmount)
+    {
+        if (isDead) return;
+
+        currentHealth -= damageAmount;
+        Debug.Log("Player hit! Remaining Health: " + currentHealth);
+
+        // Optional: Trigger a hurt animation if you have one
+        // anim.SetTrigger("hurt");
+
+        if (currentHealth <= 0)
+        {
+            PlayerDefeated();
+        }
+    }
+
+    private void PlayerDefeated()
+    {
+        isDead = true;
+        movementInput = Vector2.zero;
+        isWalking = false;
+        
+        anim.SetBool("isWalking", false);
+        // anim.SetTrigger("die"); // Trigger death animation if you have one
+
+        Debug.Log("Player has been defeated!");
     }
 }
