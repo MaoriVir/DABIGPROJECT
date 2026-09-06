@@ -4,6 +4,8 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class Enemy2Script : MonoBehaviour
 {
+    private FlashEffect flashEffect;
+    
     [Header("Projectile Settings")] public GameObject projectilePrefab;
     public Transform firePoint;
 
@@ -30,6 +32,12 @@ public class Enemy2Script : MonoBehaviour
     private int currentHealth;
     private bool isDead = false;
 
+    private void Awake()
+    {
+        // Fetch the FlashEffect script attached to this same object
+        flashEffect = GetComponent<FlashEffect>();
+    }
+    
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -148,6 +156,11 @@ public class Enemy2Script : MonoBehaviour
     if (isDead) return;
     currentHealth -= damageAmount;
     if (currentHealth <= 0) Defeat();
+    // Trigger the flash effect safely if it exists
+    if (flashEffect != null)
+    {
+        flashEffect.Flash();
+    }
 }
 
 void Defeat()

@@ -4,6 +4,9 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class Enemy1Script : MonoBehaviour
 {
+    
+    private FlashEffect flashEffect;
+    
     [Header("Projectile Settings")]
     public GameObject projectilePrefab; // Drag your bullet prefab here
     public Transform firePoint;          // Create an empty child object at gun/hand position
@@ -36,6 +39,11 @@ public class Enemy1Script : MonoBehaviour
     private int currentHealth;
     private bool isDead = false;
 
+    private void Awake()
+    {
+        // Fetch the FlashEffect script attached to this same object
+        flashEffect = GetComponent<FlashEffect>();
+    }
     void Start()
     {
         rb2d = GetComponent<Rigidbody2D>(); // <--- THIS WAS MISSING! Caches the reference to fix the crash.
@@ -163,6 +171,13 @@ public class Enemy1Script : MonoBehaviour
         {
             Defeat();
         }
+        
+        // Trigger the flash effect safely if it exists
+        if (flashEffect != null)
+        {
+            flashEffect.Flash();
+        }
+        
     }
 
     void Defeat()

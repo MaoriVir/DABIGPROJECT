@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Collider2D))] // Added to guarantee access to the player's main collider
 public class PlayerMove1 : MonoBehaviour
 {
+    private FlashEffect flashEffect;
     
     [Header("Health Settings")]
     [SerializeField] private int maxHealth = 3;
@@ -43,6 +44,12 @@ public class PlayerMove1 : MonoBehaviour
     private bool isFacingRight = true;
     private bool wasGroundPounding;
 
+    private void Awake()
+    {
+        // Fetch the FlashEffect script attached to this same object
+        flashEffect = GetComponent<FlashEffect>();
+    }
+    
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -247,6 +254,10 @@ public class PlayerMove1 : MonoBehaviour
         if (isDead) return;
 
         currentHealth -= damageAmount;
+        if (flashEffect != null)
+        {
+            flashEffect.Flash();
+        }
         Debug.Log("Player hit! Remaining Health: " + currentHealth);
 
         // Optional: Trigger a hurt animation if you have one
