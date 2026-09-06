@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
-[RequireComponent(typeof(Collider2D))] // Added to guarantee access to the player's main collider
+[RequireComponent(typeof(Collider2D))] 
 public class PlayerMove1 : MonoBehaviour
 {
     private FlashEffect flashEffect;
@@ -13,30 +14,29 @@ public class PlayerMove1 : MonoBehaviour
     private int currentHealth;
     private bool isDead = false;
     
-    [Header("Movement")] [SerializeField] private float moveSpeed = 6f;
+    [Header("Movement")] 
+    [SerializeField] private float moveSpeed = 6f;
 
-    [Header("Jumping & Variable Height")] [SerializeField]
-    private float jumpForce = 14f;
-
+    [Header("Jumping & Variable Height")] 
+    [SerializeField] private float jumpForce = 14f;
     [Range(0f, 1f)] [SerializeField] private float jumpCutMultiplier = 0.5f;
 
-    [Header("Ground Pound Settings")] [SerializeField]
-    private float groundPoundSpeed = 25f;
+    [Header("Ground Pound Settings")] 
+    [SerializeField] private float groundPoundSpeed = 25f;
 
     [Header("Ground Check Settings")] 
-    [SerializeField] private float castDistance = 0.1f; // How far below your collider to look
+    [SerializeField] private float castDistance = 0.1f; 
     [SerializeField] private LayerMask groundLayer;
 
     private Rigidbody2D rb;
     private Animator anim;
-    private Collider2D playerCollider; // Used to cast outwards without hitting yourself
+    private Collider2D playerCollider; 
 
     private Vector2 movementInput;
     private bool isGrounded;
     private bool isGroundPounding;
     private bool isWalking;
 
-    // Input state flags passed from Update to FixedUpdate
     private bool desiredJump;
     private bool isHoldingJump;
     private bool desiredGroundPound;
@@ -46,7 +46,6 @@ public class PlayerMove1 : MonoBehaviour
 
     private void Awake()
     {
-        // Fetch the FlashEffect script attached to this same object
         flashEffect = GetComponent<FlashEffect>();
     }
     
@@ -76,7 +75,6 @@ public class PlayerMove1 : MonoBehaviour
             }
         }
 
-        // Cast down using the player's actual collider shape to look specifically for enemies
         LayerMask enemyLayerMask = LayerMask.GetMask("Enemy");
         RaycastHit2D[] enemyHits = new RaycastHit2D[1];
         int enemyHitCount = playerCollider.Cast(Vector2.down, enemyHits, castDistance);
@@ -84,7 +82,6 @@ public class PlayerMove1 : MonoBehaviour
         bool isStandingOnEnemy = false;
         if (enemyHitCount > 0)
         {
-            // Verify if the layer matches the Enemy mask
             if (((1 << enemyHits[0].collider.gameObject.layer) & enemyLayerMask) != 0)
             {
                 isStandingOnEnemy = true;
@@ -104,18 +101,14 @@ public class PlayerMove1 : MonoBehaviour
     {
         wasGroundPounding = isGroundPounding;
 
-        // Combine Ground and Enemy layers
         LayerMask combinedGroundMask = groundLayer | LayerMask.GetMask("Enemy");
         
-        // This cast uses your exact player collider shape and shoots it slightly downward.
-        // It inherently IGNORES your own collider, preventing self-detection entirely.
         RaycastHit2D[] groundHits = new RaycastHit2D[1];
         int groundHitCount = playerCollider.Cast(Vector2.down, groundHits, castDistance);
         
         isGrounded = false;
         if (groundHitCount > 0)
         {
-            // Verify if the object hit belongs to either the ground or enemy layer
             if (((1 << groundHits[0].collider.gameObject.layer) & combinedGroundMask) != 0)
             {
                 isGrounded = true;
@@ -171,83 +164,82 @@ public class PlayerMove1 : MonoBehaviour
         transform.localScale = localScale;
     }
 
-  private void OnCollisionEnter2D(Collision2D collision)
-{
-    // Check for both enemy types
-    Enemy1Script enemy1 = collision.gameObject.GetComponent<Enemy1Script>();
-    Enemy2Script enemy2 = collision.gameObject.GetComponent<Enemy2Script>();
-
-    // 1. CHOOSE TARGET: Verify if we hit either type of enemy
-    bool hitEnemy = (enemy1 != null || enemy2 != null);
-
-    if (hitEnemy)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        // Check if the player is landing on them violently
-        if (isGroundPounding || wasGroundPounding || rb.linearVelocity.y < -1f)
+        Enemy1Script enemy1 = collision.gameObject.GetComponent<Enemy1Script>();
+        Enemy2Script enemy2 = collision.gameObject.GetComponent<Enemy2Script>();
+        ShipSpawner spawner = collision.gameObject.GetComponent<ShipSpawner>(); 
+
+        bool hitEnemy = (enemy1 != null || enemy2 != null);
+        bool hitSpawner = (spawner != null); 
+
+        if (hitEnemy || hitSpawner)
         {
-            // Reset player ground pound state parameters
-            isGroundPounding = false;
-            wasGroundPounding = false;
-            desiredGroundPound = false;
-            anim.ResetTrigger("pressings"); 
-
-            // --- CASE A: WE HIT ENEMY 1 (GROUND ENEMY) ---
-            if (enemy1 != null)
+            if (isGroundPounding || wasGroundPounding || rb.linearVelocity.y < -1f)
             {
-                enemy1.TakeDamage(1);
-                enemy1.KnockbackStun(1f);
+                isGroundPounding = false;
+                wasGroundPounding = false;
+                desiredGroundPound = false;
+                anim.ResetTrigger("pressings"); 
 
-                Rigidbody2D enemyRb = collision.gameObject.GetComponent<Rigidbody2D>();
-                if (enemyRb != null && enemyRb.bodyType == RigidbodyType2D.Dynamic)
+                // --- CASE A: WE HIT ENEMY 1 (GROUND ENEMY) ---
+                if (enemy1 != null)
                 {
-                    enemyRb.mass = 10f; 
-                    enemyRb.linearVelocity = Vector2.zero;
+                    enemy1.TakeDamage(1);
+                    enemy1.KnockbackStun(1f);
 
-                    if (enemy1.isGrounded)
+                    Rigidbody2D enemyRb = collision.gameObject.GetComponent<Rigidbody2D>();
+                    if (enemyRb != null && enemyRb.bodyType == RigidbodyType2D.Dynamic)
                     {
-                        Vector2 launchVector = new Vector2(0f, jumpForce * 0.5f);
-                        enemyRb.linearVelocity = launchVector;
+                        enemyRb.mass = 10f; 
+                        enemyRb.linearVelocity = Vector2.zero;
+
+                        if (enemy1.isGrounded)
+                        {
+                            Vector2 launchVector = new Vector2(0f, jumpForce * 0.5f);
+                            enemyRb.linearVelocity = launchVector;
+                        }
+                        else
+                        {
+                            enemyRb.AddForce(Vector2.down * groundPoundSpeed * 0.6f, ForceMode2D.Impulse);
+                        }
+                        StartCoroutine(RestoreEnemyMass(enemyRb));
+                    }
+                }
+                // --- CASE B: WE HIT ENEMY 2 (FLOATING ENEMY) ---
+                else if (enemy2 != null)
+                {
+                    enemy2.TakeDamage(1);
+                    
+                    if (!enemy2.isGrounded)
+                    {
+                        enemy2.TriggerSlamDown(groundPoundSpeed * 1.2f);
                     }
                     else
                     {
-                        enemyRb.AddForce(Vector2.down * groundPoundSpeed * 0.6f, ForceMode2D.Impulse);
+                        enemy2.KnockbackStun(1f);
                     }
-                    StartCoroutine(RestoreEnemyMass(enemyRb));
                 }
-            }
-            // --- CASE B: WE HIT ENEMY 2 (FLOATING ENEMY) ---
-            else if (enemy2 != null)
-            {
-                enemy2.TakeDamage(1);
-                
-                // If they are airborne, drive them straight down into the dirt using the slam API!
-                if (!enemy2.isGrounded)
+                // --- CASE C: WE HIT THE SPAWNER ---
+                else if (spawner != null)
                 {
-                    // Triggers the special downward physics script we built
-                    enemy2.TriggerSlamDown(groundPoundSpeed * 1.2f);
+                    // Adjust damage number (e.g., 1 or higher) based on your ShipSpawner health setup
+                    spawner.TakeDamage(1f); 
                 }
-                else
-                {
-                    // If they were already touching the ground, just stun them normally
-                    enemy2.KnockbackStun(1f);
-                }
-            }
 
-            // Bounce the player up into the air safely after a successful slam
-            rb.linearVelocity = Vector2.zero; 
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * 0.9f);
+                // Bounce the player up into the air safely after a successful slam
+                rb.linearVelocity = Vector2.zero; 
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * 0.75f);
+            }
         }
     }
-}
 
-    private System.Collections.IEnumerator RestoreEnemyMass(Rigidbody2D enemyRb)
+    private IEnumerator RestoreEnemyMass(Rigidbody2D enemyRb)
     {
-        yield return new WaitForSeconds(1f); 
-        if (enemyRb != null)
-        {
-            enemyRb.mass = 10000f; 
-        }
+        yield return new WaitForSeconds(0.5f);
+        if (enemyRb != null) enemyRb.mass = 1f; 
     }
+    
     
     public void TakeDamage(int damageAmount)
     {
@@ -280,4 +272,5 @@ public class PlayerMove1 : MonoBehaviour
 
         Debug.Log("Player has been defeated!");
     }
+    
 }

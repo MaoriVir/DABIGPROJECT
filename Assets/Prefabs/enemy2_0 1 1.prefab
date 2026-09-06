@@ -170,7 +170,7 @@ MonoBehaviour:
   player: {fileID: 0}
   moveSpeed: 1
   stoppingDistance: 2
-  attackRate: 2
+  attackRate: 10
   maxHealth: 2
 --- !u!70 &6888234660624812218
 CapsuleCollider2D:
