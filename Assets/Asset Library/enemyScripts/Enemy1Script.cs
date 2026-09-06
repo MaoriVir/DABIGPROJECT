@@ -21,7 +21,8 @@ public class Enemy1Script : MonoBehaviour
     public Transform player; // Drag the Player GameObject here in the Inspector
     private Animator animator;
     private SpriteRenderer spriteRenderer;
-
+    private Rigidbody2D rb2d; // Cached Rigidbody2D reference
+    
     [Header("Movement Settings")]
     public float moveSpeed = 3f;
     public float stoppingDistance = 5f;
@@ -37,6 +38,7 @@ public class Enemy1Script : MonoBehaviour
 
     void Start()
     {
+        rb2d = GetComponent<Rigidbody2D>(); // <--- THIS WAS MISSING! Caches the reference to fix the crash.
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         currentHealth = maxHealth;
@@ -71,10 +73,13 @@ public class Enemy1Script : MonoBehaviour
         {
             // The enemy has reached their shooting perimeter!
             animator.SetBool("isMoving", false);
+    
+            // Hard force velocity to absolute zero on X, keeping gravity on Y
+            rb2d.linearVelocity = new Vector2(0f, rb2d.linearVelocity.y); 
 
             if (Time.time >= nextAttackTime)
             {
-                AttackPlayer(); // Triggers your animation, which fires via the Animation Event
+                AttackPlayer(); 
                 nextAttackTime = Time.time + attackRate;
             }
         }
@@ -90,11 +95,11 @@ public class Enemy1Script : MonoBehaviour
     {
         animator.SetBool("isMoving", true);
     
-        // Target position using the player's X but the ENEMY'S OWN Y position
-        Vector2 targetPosition = new Vector2(player.position.x, transform.position.y);
+        // 1. Determine direction (1 for right, -1 for left)
+        float directionX = player.position.x > transform.position.x ? 1f : -1f;
 
-        // Move horizontally toward that target position
-        transform.position = Vector2.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+        // 2. Set horizontal physical velocity, keeping current gravity/Y velocity intact
+        rb2d.linearVelocity = new Vector2(directionX * moveSpeed, rb2d.linearVelocity.y);
     }
 
     void FlipSprite()

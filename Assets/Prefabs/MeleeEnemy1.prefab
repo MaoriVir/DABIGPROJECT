@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 3981305010867796898}
   - component: {fileID: 6464708690837366877}
   m_Layer: 7
-  m_Name: MeleeEnemy1 1 1 1
+  m_Name: MeleeEnemy1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -90,8 +90,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   player: {fileID: 0}
-  moveSpeed: 3
-  stoppingDistance: 7
+  moveSpeed: 1
+  stoppingDistance: 3
   attackRate: 2
   maxHealth: 3
 --- !u!50 &7402052685031935869

@@ -164,21 +164,31 @@ public class PlayerMove1 : MonoBehaviour
         transform.localScale = localScale;
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+  private void OnCollisionEnter2D(Collision2D collision)
+{
+    // Check for both enemy types
+    Enemy1Script enemy1 = collision.gameObject.GetComponent<Enemy1Script>();
+    Enemy2Script enemy2 = collision.gameObject.GetComponent<Enemy2Script>();
+
+    // 1. CHOOSE TARGET: Verify if we hit either type of enemy
+    bool hitEnemy = (enemy1 != null || enemy2 != null);
+
+    if (hitEnemy)
     {
-        Enemy1Script enemy = collision.gameObject.GetComponent<Enemy1Script>();
-
-        if (enemy != null)
+        // Check if the player is landing on them violently
+        if (isGroundPounding || wasGroundPounding || rb.linearVelocity.y < -1f)
         {
-            if (isGroundPounding || wasGroundPounding || rb.linearVelocity.y < -1f)
-            {
-                isGroundPounding = false;
-                wasGroundPounding = false;
-                desiredGroundPound = false;
-                anim.ResetTrigger("pressings"); 
+            // Reset player ground pound state parameters
+            isGroundPounding = false;
+            wasGroundPounding = false;
+            desiredGroundPound = false;
+            anim.ResetTrigger("pressings"); 
 
-                enemy.TakeDamage(1);
-                enemy.KnockbackStun(1f);
+            // --- CASE A: WE HIT ENEMY 1 (GROUND ENEMY) ---
+            if (enemy1 != null)
+            {
+                enemy1.TakeDamage(1);
+                enemy1.KnockbackStun(1f);
 
                 Rigidbody2D enemyRb = collision.gameObject.GetComponent<Rigidbody2D>();
                 if (enemyRb != null && enemyRb.bodyType == RigidbodyType2D.Dynamic)
@@ -186,7 +196,7 @@ public class PlayerMove1 : MonoBehaviour
                     enemyRb.mass = 10f; 
                     enemyRb.linearVelocity = Vector2.zero;
 
-                    if (enemy.isGrounded)
+                    if (enemy1.isGrounded)
                     {
                         Vector2 launchVector = new Vector2(0f, jumpForce * 0.5f);
                         enemyRb.linearVelocity = launchVector;
@@ -195,15 +205,33 @@ public class PlayerMove1 : MonoBehaviour
                     {
                         enemyRb.AddForce(Vector2.down * groundPoundSpeed * 0.6f, ForceMode2D.Impulse);
                     }
-
                     StartCoroutine(RestoreEnemyMass(enemyRb));
                 }
-
-                rb.linearVelocity = Vector2.zero; 
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * 0.9f);
             }
+            // --- CASE B: WE HIT ENEMY 2 (FLOATING ENEMY) ---
+            else if (enemy2 != null)
+            {
+                enemy2.TakeDamage(1);
+                
+                // If they are airborne, drive them straight down into the dirt using the slam API!
+                if (!enemy2.isGrounded)
+                {
+                    // Triggers the special downward physics script we built
+                    enemy2.TriggerSlamDown(groundPoundSpeed * 1.2f);
+                }
+                else
+                {
+                    // If they were already touching the ground, just stun them normally
+                    enemy2.KnockbackStun(1f);
+                }
+            }
+
+            // Bounce the player up into the air safely after a successful slam
+            rb.linearVelocity = Vector2.zero; 
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * 0.9f);
         }
     }
+}
 
     private System.Collections.IEnumerator RestoreEnemyMass(Rigidbody2D enemyRb)
     {
