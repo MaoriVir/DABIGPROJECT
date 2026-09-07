@@ -1,13 +1,23 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Collider2D))] 
 public class PlayerMove1 : MonoBehaviour
 {
+    private playerActions playerActions;
+    
     private FlashEffect flashEffect;
+    
+    //NEW HP STUFF
+    [SerializeField] private Slider hpSlider;
+    
+    [Header("Shield Projectile Settings")]
+    [SerializeField] private GameObject shieldProjectilePrefab; 
+    [SerializeField] private Transform projectileSpawnPoint; // Optional: Where the projectile spawns (e.g., player's position)
     
     [Header("Health Settings")]
     [SerializeField] private int maxHealth = 3;
@@ -51,10 +61,13 @@ public class PlayerMove1 : MonoBehaviour
     
     private void Start()
     {
+        playerActions = GetComponent<playerActions>();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         playerCollider = GetComponent<Collider2D>();
         currentHealth = maxHealth;
+        hpSlider.maxValue = maxHealth;
+        hpSlider.value = currentHealth;
     }
 
     public void OnMove(InputValue value)
@@ -166,6 +179,18 @@ public class PlayerMove1 : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        // 1. First, check if the thing we crashed into is on the Ground Layer
+        bool hitGround = ((1 << collision.gameObject.layer) & groundLayer) != 0;
+
+        if (hitGround)
+        {
+            // 2. Check if the shield script exists and is currently active
+            if (playerActions != null && playerActions.isShieldActive)
+            {
+                SpawnShieldProjectile();
+            }
+        }
+
         Enemy1Script enemy1 = collision.gameObject.GetComponent<Enemy1Script>();
         Enemy2Script enemy2 = collision.gameObject.GetComponent<Enemy2Script>();
         ShipSpawner spawner = collision.gameObject.GetComponent<ShipSpawner>(); 
@@ -175,17 +200,21 @@ public class PlayerMove1 : MonoBehaviour
 
         if (hitEnemy || hitSpawner)
         {
+           
+            
             if (isGroundPounding || wasGroundPounding || rb.linearVelocity.y < -1f)
             {
                 isGroundPounding = false;
                 wasGroundPounding = false;
                 desiredGroundPound = false;
                 anim.ResetTrigger("pressings"); 
-
+                
+               
+                
                 // --- CASE A: WE HIT ENEMY 1 (GROUND ENEMY) ---
                 if (enemy1 != null)
                 {
-                    enemy1.TakeDamage(1);
+                    enemy1.TakeDamage(5);
                     enemy1.KnockbackStun(1f);
 
                     Rigidbody2D enemyRb = collision.gameObject.GetComponent<Rigidbody2D>();
@@ -209,7 +238,7 @@ public class PlayerMove1 : MonoBehaviour
                 // --- CASE B: WE HIT ENEMY 2 (FLOATING ENEMY) ---
                 else if (enemy2 != null)
                 {
-                    enemy2.TakeDamage(1);
+                    enemy2.TakeDamage(5);
                     
                     if (!enemy2.isGrounded)
                     {
@@ -231,6 +260,8 @@ public class PlayerMove1 : MonoBehaviour
                 rb.linearVelocity = Vector2.zero; 
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * 0.75f);
             }
+            
+            
         }
     }
 
@@ -246,6 +277,7 @@ public class PlayerMove1 : MonoBehaviour
         if (isDead) return;
 
         currentHealth -= damageAmount;
+        hpSlider.value = currentHealth;
         if (flashEffect != null)
         {
             flashEffect.Flash();
@@ -271,6 +303,19 @@ public class PlayerMove1 : MonoBehaviour
         // anim.SetTrigger("die"); // Trigger death animation if you have one
 
         Debug.Log("Player has been defeated!");
+        Destroy(this.gameObject);
     }
-    
+
+
+    private void SpawnShieldProjectile()
+    {
+        if (shieldProjectilePrefab != null)
+        {
+            // Use projectileSpawnPoint position if assigned, otherwise use player's current position
+            Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
+
+            // Spawns the projectile prefab into the scene
+            Instantiate(shieldProjectilePrefab, spawnPos, Quaternion.identity);
+        }
+    }
 }

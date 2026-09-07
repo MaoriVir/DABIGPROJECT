@@ -94,7 +94,7 @@ MonoBehaviour:
   moveSpeed: 1
   stoppingDistance: 3
   attackRate: 5
-  maxHealth: 3
+  maxHealth: 10
 --- !u!50 &1095197545842927646
 Rigidbody2D:
   serializedVersion: 5

@@ -15,7 +15,7 @@ public class playerActions : MonoBehaviour
     [SerializeField] private float drainRate = 20f;       
     [SerializeField] private float movementGainRate = 10f; 
 
-    private bool isShieldActive = false;
+    public bool isShieldActive { get; private set; } = false;
 
     void OnEnable()
     {
